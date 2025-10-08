@@ -66,18 +66,32 @@ button:hover{background:#3a7bd5;color:#fff;}
 }
 .backBtn{margin-bottom:12px;}
 .small{font-size:0.9rem;color:rgba(255,255,255,0.9);margin-top:8px;}
+/* Style for injected resource links */
+.resource-link{
+  display:block;
+  background:rgba(255,255,255,0.12);
+  border-radius:8px;
+  padding:15px;
+  margin:10px 0;
+  text-decoration:none;
+  color:#fff;
+  font-weight:600;
+  transition:.2s;
+}
+.resource-link:hover{
+  background:rgba(255,255,255,0.25);
+  transform:scale(1.02);
+}
 </style>
 </head>
 <body>
 
-<!-- Splash -->
 <div id="splash">
   <img src="https://i.ibb.co/bRrftkgC/1758450615971.png" alt="Logo">
   <h1>Success Mirror</h1>
   <div class="small">Tuition study material</div>
 </div>
 
-<!-- LOGIN -->
 <div id="loginPanel" class="panel">
   <h2>Welcome Back 👋</h2>
   <div class="input-group"><label>Email</label>
@@ -91,7 +105,6 @@ button:hover{background:#3a7bd5;color:#fff;}
   </div>
 </div>
 
-<!-- SIGN UP -->
 <div id="signupPanel" class="panel">
   <h2>Create Account ✨</h2>
   <div class="input-group"><label>Email</label>
@@ -102,7 +115,6 @@ button:hover{background:#3a7bd5;color:#fff;}
   <div class="links"><a onclick="showPanel('loginPanel')">Back to login</a></div>
 </div>
 
-<!-- FORGOT -->
 <div id="forgotPanel" class="panel">
   <h2>Reset Password 🔑</h2>
   <div class="input-group"><label>Email</label>
@@ -111,49 +123,50 @@ button:hover{background:#3a7bd5;color:#fff;}
   <div class="links"><a onclick="showPanel('loginPanel')">Back to login</a></div>
 </div>
 
-<!-- HOME -->
 <div id="homePanel" class="panel">
   <h2>Welcome to Success Mirror 🎯</h2>
   <button class="backBtn" onclick="logOut()">Log Out</button>
   <div class="grid cards">
-    <div class="card" onclick="showPanel('subjectsPanel')">Class 9</div>
+    <div class="card" onclick="openResources('Science')">Class 9</div>
     <div class="card disabled">Class 10</div>
     <div class="card disabled">Class 11</div>
     <div class="card disabled">Class 12</div>
   </div>
 </div>
 
-<!-- SUBJECTS -->
 <div id="subjectsPanel" class="panel">
   <h2>Class 9 Subjects 📚</h2>
   <button class="backBtn" onclick="showPanel('homePanel')">⬅ Back</button>
   <div class="grid subjects">
     <div class="subject" onclick="openResources('Science')">Science</div>
     <div class="subject" onclick="openResources('English')">English</div>
-    <!-- Locked: Hindi -->
     <div class="subject disabled" title="Coming soon">Hindi</div>
     <div class="subject" onclick="openResources('Math')">Math</div>
     <div class="subject" onclick="openResources('Social Science')">Social Science</div>
-    <!-- Locked: Sanskrit -->
     <div class="subject disabled" title="Coming soon">Sanskrit</div>
-    <!-- Locked: AI/IT/PE -->
     <div class="subject disabled" title="Coming soon">AI / IT / PE</div>
   </div>
 </div>
 
-<!-- RESOURCES -->
 <div id="resourcesPanel" class="panel">
   <h2 id="resourceTitle">Resources</h2>
   <button class="backBtn" onclick="showPanel('subjectsPanel')">⬅ Back</button>
   <div id="resourceGrid" class="grid resources"></div>
 </div>
 
-<!-- CHAPTER LIST -->
 <div id="chapterPanel" class="panel">
   <h2 id="chapterTitle">Chapters</h2>
   <button class="backBtn" onclick="backToResources()">⬅ Back</button>
   <div id="chapterGrid" class="grid chapters"></div>
 </div>
+
+<div id="detailPanel" class="panel">
+  <h2 id="detailTitle">Chapter Details</h2>
+  <button class="backBtn" onclick="backToChapters()">⬅ Back</button>
+  <div id="detailContent" style="margin-top: 20px;">
+    </div>
+</div>
+
 <script type="module">
 /* ================= Firebase imports ================= */
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-app.js";
@@ -221,7 +234,6 @@ const ncertLinks = {
 };
 
 /* ================= Full resources data (notes + lecture) ================= */
-/* This is the mapping you provided — clicking chapter will offer notes & lecture links (if available) */
 const resourcesData = {
   "Science": {
     "NCERT": { notes: ncertLinks["Science"] },
@@ -330,7 +342,86 @@ const resourcesData = {
 let currentSubject = "";
 let resourceType = "";
 
-/* ================= openResources — called from your HTML subject buttons ================= */
+/* =================== Open Resources (Notes, Lecture, etc.) - INSERTED FROM SAVED CODE =================== */
+function openResources(subject) {
+  // NOTE: This simple function is defined here, but will be REPLACED by the
+  // more complex version later in the script (which uses handleResourceClick).
+  if (LOCKED_SUBJECTS.has(subject)) return alert("Coming soon!");
+  showPanel('resourcesPanel');
+  $('resourceTitle').textContent = `${subject} Resources`;
+
+  const grid = $('resourceGrid');
+  grid.innerHTML = '';
+
+  // Show common resource buttons
+  commonResources.forEach(resourceType => {
+    const div = document.createElement('div');
+    div.className = 'resource';
+    div.textContent = resourceType;
+    div.onclick = () => openChapters(subject, resourceType);
+    grid.appendChild(div);
+  });
+}
+window.openResources = openResources;
+
+/* =================== Open Chapters for Selected Resource - INSERTED FROM SAVED CODE =================== */
+function openChapters(subject, resourceType) {
+  // NOTE: This simple function is defined here, but the complex logic (using showChapters)
+  // will prevent it from being called.
+  showPanel('chapterPanel');
+  $('chapterTitle').textContent = `${subject} - ${resourceType}`;
+
+  const grid = $('chapterGrid');
+  grid.innerHTML = '';
+
+  const subjectData = resourcesData[subject];
+  if (!subjectData) return alert("No data found for this subject.");
+
+  Object.entries(subjectData).forEach(([chapterName, chapterData]) => {
+    const div = document.createElement('div');
+    div.className = 'chapter';
+    div.textContent = chapterName;
+
+    div.onclick = () => {
+      let link = null;
+
+      // Make comparison case-insensitive
+      switch (resourceType.toLowerCase()) {
+        case "notes":
+          link = chapterData.notes;
+          break;
+        case "lecture":
+          link = chapterData.lecture;
+          break;
+        case "sample paper":
+          link = midTermLinks[subject];
+          break;
+        case "ncert pdf":
+          link = chapterData.notes;
+          break;
+        default:
+          link = null;
+      }
+
+      if (link) {
+        window.open(link, "_blank");
+      } else {
+        alert(`No ${resourceType} available for ${chapterName}`);
+      }
+    };
+
+    grid.appendChild(div);
+  });
+}
+window.openChapters = openChapters;
+
+/* =================== Back to Resource Panel - INSERTED FROM SAVED CODE =================== */
+function backToResources() {
+  showPanel('resourcesPanel');
+}
+window.backToResources = backToResources;
+
+/* ================= openResources (COMPLEX VERSION - THIS OVERWRITES THE SIMPLE ONE) ================= */
 window.openResources = (subject) => {
   if(LOCKED_SUBJECTS.has(subject)){
     alert(subject + " is locked / coming soon.");
@@ -488,9 +579,7 @@ window.showChapters = function(list){
   showPanel('chapterPanel');
 };
 
-/* ================= showDetails: shows buttons/links for notes & lecture (uses detailPanel) ================= */
-/* NOTE: Your HTML must include panels with IDs: detailPanel, detailTitle, detailContent (or adapt below) */
-/* If your HTML doesn't have a detailPanel, this will fallback to opening links directly. */
+/* ================= showDetails: shows buttons/links for notes & lecture ================= */
 function showDetails(subject, chapter){
   const detailPanel = $('detailPanel');
   const detailTitle = $('detailTitle');
@@ -512,7 +601,7 @@ function showDetails(subject, chapter){
     else if(subject === "Social Science" && chapter.startsWith("NCERT")) res = { notes: ncertLinks["History"] };
   }
 
-  // If no detail panel present, open notes/lecture directly
+  // If panel elements are missing, fallback to alert/direct-open
   if(!detailPanel || !detailContent || !detailTitle){
     if(res && res.notes) window.open(res.notes, '_blank', 'noopener');
     else if(res && res.lecture) window.open(res.lecture, '_blank', 'noopener');
@@ -554,8 +643,12 @@ function showDetails(subject, chapter){
   showPanel('detailPanel');
 }
 
-/* ================= Back helper ================= */
+/* ================= Back helpers (COMPLEX VERSION - THESE OVERWRITE THE SIMPLE ONES) ================= */
+// Back button from Chapter Panel to Resources Panel
 window.backToResources = ()=> showPanel('resourcesPanel');
+// Back button from Detail Panel to Chapter Panel (NEW)
+window.backToChapters = ()=> showPanel('chapterPanel');
+
 
 /* ================= Auth wrapper functions (exposed to HTML if buttons use onclick) ================= */
 window.signIn = async ()=> {
